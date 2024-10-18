@@ -1,10 +1,12 @@
 // models/userModel.js
 const db = require('../config/db');
+const bcrypt = require('bcrypt');
 
 const User = {
     create: (user, callback) => {
+        const hashedPassword = bcrypt.hashSync(user.password, 10); // Hashing a senha
         const query = 'INSERT INTO users (username, password, role) VALUES (?, ?, ?)';
-        db.query(query, [user.username, user.password, user.role], (err, results) => {
+        db.query(query, [user.username, hashedPassword, user.role], (err, results) => {
             if (err) {
                 return callback(err);
             }
@@ -33,8 +35,9 @@ const User = {
     },
 
     update: (id, user, callback) => {
+        const hashedPassword = bcrypt.hashSync(user.password, 10); // Hashing a nova senha
         const query = 'UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?';
-        db.query(query, [user.username, user.password, user.role, id], (err, results) => {
+        db.query(query, [user.username, hashedPassword, user.role, id], (err, results) => {
             if (err) {
                 return callback(err);
             }
@@ -70,7 +73,15 @@ const User = {
             }
             callback(null, results);
         });
-    },    
+    },
+
+    // Método para comparar senhas
+    comparePassword: (candidatePassword, hash, callback) => {
+        bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
+            if (err) return callback(err);
+            callback(null, isMatch);
+        });
+    },
 };
 
 module.exports = User;
