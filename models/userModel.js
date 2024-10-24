@@ -1,87 +1,41 @@
-// models/userModel.js
-const db = require('../config/db');
-const bcrypt = require('bcrypt');
+const connection = require('../config/db');
+const bcrypt = require('bcryptjs');
 
-const User = {
-    create: (user, callback) => {
-        const hashedPassword = bcrypt.hashSync(user.password, 10); // Hashing a senha
+const createUser = async (username, password, role = 'user') => {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    return new Promise((resolve, reject) => {
         const query = 'INSERT INTO users (username, password, role) VALUES (?, ?, ?)';
-        db.query(query, [user.username, hashedPassword, user.role], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results.insertId);
+        connection.query(query, [username, hashedPassword, role], (err, results) => {
+            if (err) return reject(err);
+            resolve(results.insertId);
         });
-    },
-
-    findById: (id, callback) => {
-        const query = 'SELECT * FROM users WHERE id = ?';
-        db.query(query, [id], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results[0]);
-        });
-    },
-
-    findByUsername: (username, callback) => {
-        const query = 'SELECT * FROM users WHERE username = ?';
-        db.query(query, [username], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results[0]);
-        });
-    },
-
-    update: (id, user, callback) => {
-        const hashedPassword = bcrypt.hashSync(user.password, 10); // Hashing a nova senha
-        const query = 'UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?';
-        db.query(query, [user.username, hashedPassword, user.role, id], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results);
-        });
-    },
-
-    delete: (id, callback) => {
-        const query = 'DELETE FROM users WHERE id = ?';
-        db.query(query, [id], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results);
-        });
-    },
-
-    getAll: (callback) => {
-        const query = 'SELECT * FROM users';
-        db.query(query, (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results);
-        });
-    },
-
-    searchByName: (name, callback) => {
-        const query = 'SELECT * FROM users WHERE username LIKE ?';
-        db.query(query, [`%${name}%`], (err, results) => {
-            if (err) {
-                return callback(err);
-            }
-            callback(null, results);
-        });
-    },
-
-    // Método para comparar senhas
-    comparePassword: (candidatePassword, hash, callback) => {
-        bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
-            if (err) return callback(err);
-            callback(null, isMatch);
-        });
-    },
+    });
 };
 
-module.exports = User;
+const findUserByUsername = (username) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT * FROM users WHERE username = ?';
+        connection.query(query, [username], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0]);
+        });
+    });
+};
+
+const findUserById = (id) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT * FROM users WHERE id = ?';
+        connection.query(query, [id], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0]);
+        });
+    });
+};
+
+module.exports = {
+    createUser,
+    findUserByUsername,
+    findUserById,
+};

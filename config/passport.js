@@ -1,31 +1,36 @@
 const LocalStrategy = require('passport-local').Strategy;
-const User = require('../models/userModel'); // Certifique-se de que este caminho está correto
+const { findUserByUsername, findUserById } = require('../models/userModel');
+const bcrypt = require('bcryptjs');
 
-module.exports = (passport) => {
-    passport.use(new LocalStrategy(
-        { usernameField: 'username' },
-        (username, password, done) => {
-            User.findByUsername(username, (err, user) => {
-                if (err) return done(err);
-                if (!user) return done(null, false, { message: 'Usuário não encontrado' });
+module.exports = function(passport) {
+    passport.use(new LocalStrategy({ usernameField: 'username' }, async (username, password, done) => {
+        try {
+            const user = await findUserByUsername(username);
+            if (!user) {
+                return done(null, false, { message: 'Usuário não encontrado' });
+            }
 
-                // Verifica a senha
-                User.comparePassword(password, user.password, (err, isMatch) => {
-                    if (err) return done(err);
-                    if (!isMatch) return done(null, false, { message: 'Senha incorreta' });
-                    return done(null, user);
-                });
-            });
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return done(null, false, { message: 'Senha incorreta' });
+            }
+
+            return done(null, user);
+        } catch (err) {
+            return done(err);
         }
-    ));
+    }));
 
     passport.serializeUser((user, done) => {
         done(null, user.id);
     });
 
-    passport.deserializeUser((id, done) => {
-        User.findById(id, (err, user) => {
-            done(err, user);
-        });
+    passport.deserializeUser(async (id, done) => {
+        try {
+            const user = await findUserById(id);
+            done(null, user);
+        } catch (err) {
+            done(err, null);
+        }
     });
 };

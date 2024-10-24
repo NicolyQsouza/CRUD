@@ -1,39 +1,37 @@
 const express = require('express');
 const passport = require('passport');
+const { createUser } = require('../models/userModel');
 const router = express.Router();
-const User = require('../models/userModel'); // Importando o modelo de usuário
 
 // Rota para exibir a página de login
 router.get('/login', (req, res) => {
-    const messages = req.flash('error'); // Mensagens de erro
-    res.render('login', { messages }); // Passa mensagens para a view
+    const messages = req.flash('error');
+    res.render('login', { messages });
 });
 
 // Rota de login
 router.post('/login', passport.authenticate('local', {
-    successRedirect: '/dashboard', // Redireciona para o painel após o login
+    successRedirect: '/', // Redireciona para a tela inicial após o login bem-sucedido
     failureRedirect: '/auth/login', // Redireciona para a página de login em caso de falha
     failureFlash: true // Habilita flash messages para erros
 }));
 
 // Rota para exibir a página de registro
 router.get('/register', (req, res) => {
-    const messages = req.flash('error'); // Mensagens de erro
-    res.render('register', { messages }); // Passa mensagens para a view
+    const messages = req.flash('error');
+    res.render('register', { messages });
 });
 
 // Rota de registro
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
-
     try {
-        const newUser = new User({ username });
-        await User.register(newUser, password); // Usando o método register do passport-local-mongoose
+        await createUser(username, password);
         req.flash('success', 'Usuário criado com sucesso!');
-        res.redirect('/auth/login'); // Redireciona para a página de login após o registro
+        res.redirect('/auth/login');
     } catch (err) {
         req.flash('error', 'Erro ao criar usuário: ' + err.message);
-        res.redirect('/auth/register'); // Redireciona para a página de registro em caso de erro
+        res.redirect('/auth/register');
     }
 });
 
@@ -43,7 +41,7 @@ router.get('/logout', (req, res) => {
         if (err) {
             return next(err);
         }
-        res.redirect('/'); // Redireciona para a página inicial após logout
+        res.redirect('/');
     });
 });
 

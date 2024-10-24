@@ -1,99 +1,38 @@
 const User = require('../models/userModel');
 
-const userController = {
-    createUser: (req, res) => {
-        const newUser = {
-            username: req.body.username,
-            password: req.body.password,
-            role: req.body.role,
-        };
-
-        User.create(newUser, (err, userId) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            res.redirect('/users');
-        });
-    },
-
-    getUserById: (req, res) => {
-        const userId = req.params.id;
-
-        User.findById(userId, (err, user) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-            res.render('users/show', { user });
-        });
-    },
-
-    getAllUsers: (req, res) => {
-        User.getAll((err, users) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            res.render('users/index', { users });
-        });
-    },
-
-    renderCreateForm: (req, res) => {
-        res.render('users/create');
-    },
-
-    renderEditForm: (req, res) => {
-        const userId = req.params.id;
-
-        User.findById(userId, (err, user) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-            res.render('users/edit', { user });
-        });
-    },
-
-    updateUser: (req, res) => {
-        const userId = req.params.id;
-        const updatedUser = {
-            username: req.body.username,
-            password: req.body.password,
-            role: req.body.role,
-        };
-
-        User.update(userId, updatedUser, (err) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            res.redirect('/users');
-        });
-    },
-
-    deleteUser: (req, res) => {
-        const userId = req.params.id;
-
-        User.delete(userId, (err) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            res.redirect('/users');
-        });
-    },
-
-    searchUsers: (req, res) => {
-        const search = req.query.search || '';
-
-        User.searchByName(search, (err, users) => {
-            if (err) {
-                return res.status(500).json({ error: err });
-            }
-            res.json({ users });
-        });
-    },
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.render('users', { users });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 };
 
-module.exports = userController;
+exports.searchUsers = async (req, res) => {
+    // Adicione sua lógica de busca de usuários aqui
+};
+
+exports.renderCreateForm = (req, res) => {
+    res.render('createUser');
+};
+
+exports.createUser = async (req, res) => {
+    // Adicione sua lógica de criação de usuários aqui
+};
+
+exports.getUserById = async (req, res) => {
+    // Adicione sua lógica para obter um usuário pelo ID
+};
+
+exports.renderEditForm = async (req, res) => {
+    // Adicione sua lógica para renderizar o formulário de edição
+};
+
+exports.updateUser = async (req, res) => {
+    // Adicione sua lógica de atualização de usuários aqui
+};
+
+exports.deleteUser = async (req, res) => {
+    // Adicione sua lógica de exclusão de usuários aqui
+};
